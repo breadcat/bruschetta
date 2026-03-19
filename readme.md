@@ -15,8 +15,6 @@ Then access the servers IP address via a web browser on port `8080`.
 
 The application is also buildable via your usual `go build -o bruschetta .`.
 
-Note: the `templates/` directory must be alongside the binary at runtime.
-
 ## Features
 * List and thumbnail view
 * Thumbnails generated on the fly and cached
