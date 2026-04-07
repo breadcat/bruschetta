@@ -47,6 +47,7 @@ type PageData struct {
 	Breadcrumbs []Breadcrumb
 	Files       []FileEntry
 	TreeJSON    template.JS
+	View        string
 }
 
 const tmpl = `<!DOCTYPE html>
@@ -123,13 +124,13 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
       {{ if eq $i (sub1 (len $.Breadcrumbs)) }}
         <span class="current">{{ $crumb.Name }}</span>
       {{ else }}
-        <a href="{{ $crumb.Path }}">{{ $crumb.Name }}</a>
+        <a href="{{ viewSuffix $.View $crumb.Path }}">{{ $crumb.Name }}</a>
       {{ end }}
     {{ end }}
   </div>
   <div class="view-toggle">
-    <button id="btn-list" class="active" onclick="setView('list')">&#9776; List</button>
-    <button id="btn-thumb" onclick="setView('thumb')">&#9638; Thumbs</button>
+    <button id="btn-list" class="{{ if eq .View "list" }}active{{ end }}" onclick="setView('list')">&#9776; List</button>
+    <button id="btn-thumb" class="{{ if eq .View "thumb" }}active{{ end }}" onclick="setView('thumb')">&#9638; Thumbs</button>
   </div>
 </header>
 
@@ -140,7 +141,7 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
   </nav>
 
   <main class="main">
-    <div id="view-list">
+    <div id="view-list"{{ if eq .View "thumb" }} style="display:none"{{ end }}>
       {{ if .Files }}
       <table class="file-table" id="file-table">
         <thead>
@@ -153,7 +154,7 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
         <tbody>
           {{ if ne .CurrentPath "/" }}
           <tr>
-            <td class="name"><span class="file-icon dir">&#128193;</span><a href="../">../</a></td>
+            <td class="name"><span class="file-icon dir">&#128193;</span><a href="{{ viewSuffix $.View "../" }}">../</a></td>
             <td class="size">—</td>
             <td class="date">—</td>
           </tr>
@@ -162,7 +163,7 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
           <tr data-name="{{ .Name }}" data-size="{{ .Size }}" data-date="{{ .ModTime.Unix }}">
             <td class="name">
               {{ if .IsDir }}
-                <span class="file-icon dir">&#128193;</span><a href="{{ .Path }}">{{ .Name }}/</a>
+                <span class="file-icon dir">&#128193;</span><a href="{{ viewSuffix $.View .Path }}">{{ .Name }}/</a>
               {{ else if isImage .Ext }}
                 <span class="file-icon img">&#128247;</span><a href="{{ .Path }}">{{ .Name }}</a>
               {{ else }}
@@ -180,12 +181,12 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
       {{ end }}
     </div>
 
-    <div id="view-thumb" style="display:none">
+    <div id="view-thumb"{{ if eq .View "list" }} style="display:none"{{ end }}>
       {{ if .Files }}
       <div class="thumb-grid">
         {{ if ne .CurrentPath "/" }}
         <div class="thumb-item">
-          <a href="../" style="display:block">
+          <a href="{{ viewSuffix $.View "../" }}" style="display:block">
             <div class="thumb-preview"><span class="big-icon dir-icon">&#8593;</span></div>
             <div class="thumb-label">../</div>
           </a>
@@ -193,7 +194,7 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
         {{ end }}
         {{ range .Files }}
         <div class="thumb-item">
-          <a href="{{ .Path }}" style="display:block">
+          <a href="{{ if .IsDir }}{{ viewSuffix $.View .Path }}{{ else }}{{ .Path }}{{ end }}" style="display:block">
             <div class="thumb-preview">
               {{ if .IsDir }}
                 <span class="big-icon dir-icon">&#128193;</span>
@@ -220,14 +221,16 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
 
 <script>
 const TREE_DATA = {{ .TreeJSON }};
-const CURRENT_PATH = {{ printf "%q" .CurrentPath }};
+const CURRENT_PATH = '{{ .CurrentPath }}';
+const VIEW = '{{ .View }}';
 
 function setView(v) {
-  const isList = v === 'list';
-  document.getElementById('view-list').style.display = isList ? '' : 'none';
-  document.getElementById('view-thumb').style.display = isList ? 'none' : '';
-  document.getElementById('btn-list').className = isList ? 'active' : '';
-  document.getElementById('btn-thumb').className = isList ? '' : 'active';
+  if (v === VIEW) return;
+  window.location.href = v === 'thumb' ? window.location.pathname + '?v=thumb' : window.location.pathname;
+}
+
+function viewHref(path) {
+  return VIEW === 'thumb' ? path + '?v=thumb' : path;
 }
 
 let sortCol = -1, sortDir = 1;
@@ -293,7 +296,7 @@ function buildTree(nodes, container, depth) {
       });
     }
 
-    item.addEventListener('click', () => { window.location.href = node.path; });
+    item.addEventListener('click', () => { window.location.href = viewHref(node.path); });
 
     if (CURRENT_PATH.startsWith(node.path) && childUl) {
       childUl.classList.add('open');
@@ -364,7 +367,11 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !strings.HasSuffix(r.URL.Path, "/") {
-		http.Redirect(w, r, r.URL.Path+"/", http.StatusMovedPermanently)
+		redir := r.URL.Path + "/"
+		if v := r.URL.Query().Get("v"); v == "thumb" {
+			redir += "?v=thumb"
+		}
+		http.Redirect(w, r, redir, http.StatusMovedPermanently)
 		return
 	}
 
@@ -412,11 +419,17 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 	tree := buildTree(rootDir, "/")
 	treeBytes, _ := json.Marshal(tree)
 
+	view := r.URL.Query().Get("v")
+	if view != "thumb" {
+		view = "list"
+	}
+
 	data := PageData{
 		CurrentPath: urlPath,
 		Breadcrumbs: buildBreadcrumbs(urlPath),
 		Files:       files,
 		TreeJSON:    template.JS(treeBytes),
+		View:        view,
 	}
 
 	funcMap := template.FuncMap{
@@ -424,6 +437,12 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 		"formatTime": func(t time.Time) string { return t.Format("2006-01-02 15:04") },
 		"isImage":    isImageExt,
 		"sub1":       func(n int) int { return n - 1 },
+		"viewSuffix": func(view, path string) string {
+			if view == "thumb" {
+				return path + "?v=thumb"
+			}
+			return path
+		},
 	}
 
 	t, err := template.New("page").Funcs(funcMap).Parse(tmpl)
