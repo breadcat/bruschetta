@@ -57,7 +57,7 @@ const tmpl = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ .CurrentPath }}</title>
 <style>
-*,::after,::before{box-sizing:border-box;margin:0;padding:0}
+*,::after,::before{box-sizing:border-box;margin:0;padding:0;list-style:none}
 a:hover{text-decoration:underline}
 body,html{height:100%;overflow:hidden}
 body{background:#1a1a1a;color:#d4d4d4;font-family:Consolas,Menlo,'DejaVu Sans Mono',monospace;font-size:13px;display:flex;flex-direction:column}
@@ -107,7 +107,6 @@ main{flex:1;overflow-y:auto}
 .tree-item.active{color:#5b9bd5}
 .tree-item{align-items:center;padding:3px 8px;overflow:hidden;color:#d4d4d4;font-size:12px}
 .tree-label{overflow:hidden;text-overflow:ellipsis}
-.tree-root{list-style:none}
 .tree-toggle{width:12px;text-align:center;color:#777;flex-shrink:0;font-size:10px}
 .view-toggle button.active{background:#1a1a1a;color:#5b9bd5;border-color:#5b9bd5}
 .view-toggle button:hover{background:#2e2e2e;color:#d4d4d4}
@@ -148,7 +147,7 @@ main{flex:1;overflow-y:auto}
 <div class="layout">
   <nav class="sidebar">
     <div class="sidebar-title">Folders</div>
-    <ul class="tree-root" id="tree-root"></ul>
+    <ul id="tree-root"></ul>
   </nav>
 
   <main>
