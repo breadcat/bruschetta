@@ -63,6 +63,7 @@ body,html{height:100%;overflow:hidden}
 body{background:#1a1a1a;color:#d4d4d4;font-family:Consolas,Menlo,'DejaVu Sans Mono',monospace;font-size:13px;display:flex;flex-direction:column}
 footer{padding:6px 16px;color:#777}
 header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:center;gap:12px}
+main{flex:1;overflow-y:auto}
 @media (max-width: 640px) { .sidebar { display: none; } .file-table td.date { display: none; } .file-table td.size { min-width: 50px; } .thumb-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 8px; } }
 .breadcrumb .current{color:#777}
 .breadcrumb .sep{color:#777;margin:0 2px}
@@ -87,7 +88,6 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
 .file-table thead{position:sticky;top:0}
 .file-table{width:100%;border-collapse:collapse}
 .layout{display:flex;flex:1;overflow:hidden}
-.main{flex:1;overflow-y:auto}
 .sidebar,.thumb-item,footer,header{background:#222}
 .sidebar{width:220px;min-width:220px;border-right:1px solid #333;overflow-y:auto;overflow-x:hidden;padding:8px 0;flex-shrink:0}
 .sidebar-title{font-size:10px;letter-spacing:.1em;color:#777;padding:4px 12px 8px;text-transform:uppercase}
@@ -150,7 +150,7 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
     <ul class="tree-root" id="tree-root"></ul>
   </nav>
 
-  <main class="main">
+  <main>
     <div id="view-list"{{ if eq .View "thumb" }} style="display:none"{{ end }}>
       {{ if .Files }}
       <table class="file-table" id="file-table">
