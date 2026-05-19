@@ -16,7 +16,8 @@ Then access the servers IP address via a web browser on port `8080`.
 The application is also buildable via your usual `go build -o bruschetta .`.
 
 ## Features
-* List and thumbnail view
+* List and thumbnail views
+* Filter current directory
 * Thumbnails generated on the fly and cached
 * Dotfiles are hidden, but still accessible
 * Collapsable folder tree

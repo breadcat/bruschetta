@@ -112,6 +112,12 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
 .view-toggle button:hover{background:#2e2e2e;color:#d4d4d4}
 .view-toggle button{background:#2a2a2a;border:1px solid #333;color:#777;padding:4px 10px;cursor:pointer;font-size:12px;font-family:inherit}
 .view-toggle{margin-left:auto}
+.filter-box{display:flex;align-items:center;gap:6px;margin-left:auto}
+.filter-box input{background:#2a2a2a;border:1px solid #333;color:#d4d4d4;font-family:inherit;font-size:12px;padding:4px 10px;width:180px;outline:none}
+.filter-box input::placeholder{color:#555}
+.filter-box input:focus{border-color:#5b9bd5}
+.filter-clear{background:none;border:none;color:#555;cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
+.filter-clear:hover{color:#d4d4d4}
 </style>
 </head>
 <body>
@@ -127,6 +133,10 @@ header{border-bottom:1px solid #333;padding:10px 16px;display:flex;align-items:c
         <a href="{{ viewSuffix $.View $crumb.Path }}">{{ $crumb.Name }}</a>
       {{ end }}
     {{ end }}
+  </div>
+  <div class="filter-box">
+    <input type="text" id="filter-input" placeholder="Filter..." oninput="filterView(this.value)" autocomplete="off" spellcheck="false">
+    <button class="filter-clear" id="filter-clear" onclick="clearFilter()" title="Clear filter" style="display:none">&#10005;</button>
   </div>
   <div class="view-toggle">
     <button id="btn-list" class="{{ if eq .View "list" }}active{{ end }}" onclick="setView('list')">&#9776; List</button>
@@ -227,6 +237,34 @@ const VIEW = '{{ .View }}';
 function setView(v) {
   if (v === VIEW) return;
   window.location.href = v === 'thumb' ? window.location.pathname + '?v=thumb' : window.location.pathname;
+}
+
+function filterView(query) {
+  const q = query.trim().toLowerCase();
+  document.getElementById('filter-clear').style.display = q ? '' : 'none';
+
+  // Filter rows, skipping parent
+  document.querySelectorAll('#file-table tbody tr').forEach(row => {
+    const name = (row.dataset.name || '').toLowerCase();
+    if (!name) { row.style.display = ''; return; }
+    row.style.display = (!q || name.includes(q)) ? '' : 'none';
+  });
+
+  document.querySelectorAll('#view-thumb .thumb-item').forEach(item => {
+    const label = item.querySelector('.thumb-label');
+    if (!label) { item.style.display = ''; return; }
+    const name = label.textContent.trim().toLowerCase();
+    // The ../ item text is "../" — keep it always visible
+    if (name === '../') { item.style.display = ''; return; }
+    item.style.display = (!q || name.includes(q)) ? '' : 'none';
+  });
+}
+
+function clearFilter() {
+  const input = document.getElementById('filter-input');
+  input.value = '';
+  filterView('');
+  input.focus();
 }
 
 function viewHref(path) {
