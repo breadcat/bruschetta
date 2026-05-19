@@ -94,6 +94,7 @@ main{flex:1;overflow-y:auto}
 .thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:16px}
 .thumb-item:hover{border-color:#5b9bd5}
 .thumb-item{border:1px solid #333;overflow:hidden}
+.thumb-item a,.thumb-item a:hover{text-decoration:none}
 .thumb-label,footer{border-top:1px solid #333;font-size:11px}
 .thumb-label{padding:6px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .thumb-meta{font-size:10px;color:#777;padding:0 8px 6px}
