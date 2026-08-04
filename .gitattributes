@@ -1,2 +1,5 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Unix line endings
+*.go test eol=lf
+*.md test eol=lf
+*.mod test eol=lf
+*.png binary
