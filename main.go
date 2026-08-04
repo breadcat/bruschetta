@@ -413,6 +413,14 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, indexName := range []string{"index.html", "index.htm"} {
+		indexPath := filepath.Join(fsPath, indexName)
+		if fi, err := os.Stat(indexPath); err == nil && !fi.IsDir() {
+			http.ServeFile(w, r, indexPath)
+			return
+		}
+	}
+
 	entries, err := os.ReadDir(fsPath)
 	if err != nil {
 		http.Error(w, "Cannot read directory", http.StatusInternalServerError)

@@ -23,6 +23,7 @@ The application is also buildable via your usual `go build -o bruschetta .`.
 * Collapsable folder tree
 * Sortable Name, Size and Modified columns
 * No dependencies outside stdlib
+* Renders `index.htm(l)` files in directories instead of listing
 
 ## Screenshot
 
