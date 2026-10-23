@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -518,7 +520,34 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 
-	img, _, err := image.Decode(f)
+	var img image.Image
+
+	if strings.EqualFold(filepath.Ext(fsPath), ".webm") {
+		f.Close()
+
+		cmd := exec.Command(
+			"ffmpeg",
+			"-v", "error",
+			"-i", fsPath,
+			"-frames:v", "1",
+			"-f", "image2pipe",
+			"-vcodec", "mjpeg",
+			"pipe:1",
+		)
+
+		var out bytes.Buffer
+		cmd.Stdout = &out
+
+		if err := cmd.Run(); err != nil {
+			servePlaceholder(w)
+			return
+		}
+
+		img, _, err = image.Decode(&out)
+	} else {
+		img, _, err = image.Decode(f)
+	}
+
 	if err != nil {
 		servePlaceholder(w)
 		return
@@ -527,7 +556,8 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	thumb := resizeNN(img, 200, 150)
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Cache-Control", "max-age=3600")
-	jpeg.Encode(w, thumb, &jpeg.Options{Quality: 75})
+	_ = jpeg.Encode(w, thumb, &jpeg.Options{Quality: 75})
+
 }
 
 func resizeNN(src image.Image, maxW, maxH int) image.Image {
@@ -586,7 +616,7 @@ func buildTree(basePath, urlBase string) []*TreeNode {
 
 func isImageExt(ext string) bool {
 	switch ext {
-	case "jpg", "jpeg", "png", "gif", "webp", "bmp", "avif":
+	case "jpg", "jpeg", "png", "gif", "webp", "bmp", "avif", "webm":
 		return true
 	}
 	return false

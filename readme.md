@@ -22,7 +22,7 @@ The application is also buildable via your usual `go build -o bruschetta .`.
 * Dotfiles are hidden, but still accessible
 * Collapsable folder tree
 * Sortable Name, Size and Modified columns
-* No dependencies outside stdlib
+* No dependencies outside stdlib, does require `ffmpeg` for webm thumbnails
 * Renders `index.htm(l)` files in directories instead of listing
 
 ## Screenshot
