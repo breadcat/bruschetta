@@ -210,8 +210,10 @@ main{flex:1;overflow-y:auto}
             <div class="thumb-preview">
               {{ if .IsDir }}
                 <span class="big-icon dir-icon">&#128193;</span>
-              {{ else if isImage .Ext }}
-                <img src="/__thumb{{ .Path }}" alt="{{ .Name }}" loading="lazy">
+                {{ else if eq .Ext "svg" }}
+                  <img src="{{ .Path }}" alt="{{ .Name }}" loading="lazy">
+                {{ else if isImage .Ext }}
+                  <img src="/__thumb{{ .Path }}" alt="{{ .Name }}" loading="lazy">
               {{ else }}
                 <span class="big-icon">&#128196;</span>
               {{ end }}
