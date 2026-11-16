@@ -524,7 +524,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 
 	var img image.Image
 
-	if strings.EqualFold(filepath.Ext(fsPath), ".webm") {
+	if isVideoExt(strings.ToLower(strings.TrimPrefix(filepath.Ext(fsPath), "."))) {
 		f.Close()
 
 		cmd := exec.Command(
@@ -618,7 +618,15 @@ func buildTree(basePath, urlBase string) []*TreeNode {
 
 func isImageExt(ext string) bool {
 	switch ext {
-	case "jpg", "jpeg", "png", "gif", "webp", "bmp", "avif", "webm":
+	case "jpg", "jpeg", "png", "gif", "webp", "bmp", "avif":
+		return true
+	}
+	return isVideoExt(ext)
+}
+
+func isVideoExt(ext string) bool {
+	switch ext {
+	case "webm", "mp4", "m4v", "mkv", "mov", "avi", "wmv", "flv", "mpg", "mpeg", "3gp", "ogv", "mts", "m2ts":
 		return true
 	}
 	return false
