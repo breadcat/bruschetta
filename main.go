@@ -14,6 +14,7 @@ import (
 	_ "image/png"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -177,9 +178,9 @@ main{flex:1;overflow-y:auto}
               {{ if .IsDir }}
                 <span class="file-icon dir">&#128193;</span><a href="{{ viewSuffix $.View .Path }}">{{ .Name }}/</a>
               {{ else if isImage .Ext }}
-                <span class="file-icon img">&#128247;</span><a href="{{ .Path }}">{{ .Name }}</a>
+                <span class="file-icon img">&#128247;</span><a href="{{ urlPath .Path }}">{{ .Name }}</a>
               {{ else }}
-                <span class="file-icon">&#128196;</span><a href="{{ .Path }}">{{ .Name }}</a>
+                <span class="file-icon">&#128196;</span><a href="{{ urlPath .Path }}">{{ .Name }}</a>
               {{ end }}
             </td>
             <td class="size">{{ if .IsDir }}—{{ else }}{{ formatSize .Size }}{{ end }}</td>
@@ -206,14 +207,14 @@ main{flex:1;overflow-y:auto}
         {{ end }}
         {{ range .Files }}
         <div class="thumb-item">
-          <a href="{{ if .IsDir }}{{ viewSuffix $.View .Path }}{{ else }}{{ .Path }}{{ end }}" style="display:block">
+          <a href="{{ if .IsDir }}{{ viewSuffix $.View .Path }}{{ else }}{{ urlPath .Path }}{{ end }}" style="display:block">
             <div class="thumb-preview">
               {{ if .IsDir }}
                 <span class="big-icon dir-icon">&#128193;</span>
                 {{ else if eq .Ext "svg" }}
-                  <img src="{{ .Path }}" alt="{{ .Name }}" loading="lazy">
+                  <img src="{{ urlPath .Path }}" alt="{{ .Name }}" loading="lazy">
                 {{ else if isImage .Ext }}
-                  <img src="/__thumb{{ .Path }}" alt="{{ .Name }}" loading="lazy">
+                  <img src="/__thumb{{ urlPath .Path }}" alt="{{ .Name }}" loading="lazy">
               {{ else }}
                 <span class="big-icon">&#128196;</span>
               {{ end }}
@@ -272,7 +273,8 @@ function clearFilter() {
 }
 
 function viewHref(path) {
-  return VIEW === 'thumb' ? path + '?v=thumb' : path;
+  const encoded = path.split('/').map(encodeURIComponent).join('/');
+  return VIEW === 'thumb' ? encoded + '?v=thumb' : encoded;
 }
 
 let sortCol = -1, sortDir = 1;
@@ -409,7 +411,7 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !strings.HasSuffix(r.URL.Path, "/") {
-		redir := r.URL.Path + "/"
+		redir := escapePath(r.URL.Path + "/")
 		if v := r.URL.Query().Get("v"); v == "thumb" {
 			redir += "?v=thumb"
 		}
@@ -486,8 +488,10 @@ func listingHandler(w http.ResponseWriter, r *http.Request) {
 		"formatSize": formatSize,
 		"formatTime": func(t time.Time) string { return t.Format("2006-01-02 15:04") },
 		"isImage":    isImageExt,
+		"urlPath":    escapePath,
 		"sub1":       func(n int) int { return n - 1 },
 		"viewSuffix": func(view, path string) string {
+			path = escapePath(path)
 			if view == "thumb" {
 				return path + "?v=thumb"
 			}
@@ -630,6 +634,10 @@ func isVideoExt(ext string) bool {
 		return true
 	}
 	return false
+}
+
+func escapePath(p string) string {
+	return (&url.URL{Path: p}).EscapedPath()
 }
 
 func formatSize(n int64) string {
